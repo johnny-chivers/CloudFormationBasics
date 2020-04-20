@@ -1,0 +1,99 @@
+{
+    "Parameters": {
+        "S3Bucket": {
+            "Description": "The name of the bucket that contains your packaged source",
+            "Type": "String"
+        },
+        "S3Key": {
+            "Description": "Zip File key",
+            "Type": "String"
+        }
+    },
+    "Resources": {
+        "JohnnyChiversCloudFormationLambdaExecutionRole": {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+                "AssumeRolePolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Effect": "Allow",
+                            "Principal": {
+                                "Service": [
+                                    "lambda.amazonaws.com"
+                                ]
+                            },
+                            "Action": [
+                                "sts:AssumeRole"
+                            ]
+                        }
+                    ]
+                },
+                "Path": "/"
+            }
+        },
+        "JohnnyChiversCloudFormationLambdaPolicy": {
+            "DependsOn": [
+                "JohnnyChiversCloudFormationLambdaExecutionRole"
+            ],
+            "Type": "AWS::IAM::Policy",
+            "Properties": {
+                "PolicyName": "JohnnyChiversCloudFormationLambdaExecutionPolicy",
+                "Roles": [
+                    {
+                        "Ref": "JohnnyChiversCloudFormationLambdaExecutionRole"
+                    }
+                ],
+                "PolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Effect": "Allow",
+                            "Action": "logs:CreateLogGroup",
+                            "Resource": "arn:aws:logs:eu-west-1:898815200436:*"
+                        },
+                        {
+                            "Effect": "Allow",
+                            "Action": [
+                                "logs:CreateLogStream",
+                                "logs:PutLogEvents"
+                            ],
+                            "Resource": [
+                                "*"
+                            ]
+                        }
+                    ]
+                }
+            }
+        },
+        "JohnnyChiversLambda": {
+            "Type": "AWS::Lambda::Function",
+            "DependsOn": [
+                "JohnnyChiversCloudFormationLambdaExecutionRole",
+                "JohnnyChiversCloudFormationLambdaPolicy"
+            ],
+            "Properties": {
+                "Code": {
+                    "S3Bucket": {
+                        "Ref": "S3Bucket"
+                    },
+                    "S3Key": {
+                        "Ref": "S3Key"
+                    }
+                },
+                "Description": "Example Cloud formation Lambda That prints to the log",
+                "FunctionName": "Johnny-chivers-lambda-cloudformation-example",
+                "Handler": "lambda-cf-example.lambda_handler",
+                "MemorySize": 128,
+                "Role": {
+                    "Fn::GetAtt": [
+                        "JohnnyChiversCloudFormationLambdaExecutionRole",
+                        "Arn"
+                    ]
+                },
+                "Runtime": "python3.8",
+                "Timeout": 30
+            }
+        }
+    }
+}
